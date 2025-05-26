@@ -1,0 +1,8 @@
+aiohttp==3.8.4
+fastapi==0.95.0
+google-generativeai==0.7.1 # Pinned to a specific version
+jinja2==3.1.2
+pydantic==1.10.7
+python-multipart==0.0.6
+uvicorn==0.21.1
+websockets==11.0.1

@@ -1,0 +1,336 @@
+{
+  "id": "test_town",
+  "name": "Rivercross",
+  "size": "hamlet",
+  "population": 200,
+  "description": "Rivercross is a hamlet built along the banks of a winding river, with a population of about 200 people.",
+  "buildings": [
+    {
+      "id": "building_1",
+      "name": "Old Temple",
+      "type": "temple",
+      "description": "a sturdy structure with a thatched roof",
+      "npcs": []
+    },
+    {
+      "id": "building_2",
+      "name": "The Prancing Lion",
+      "type": "tavern",
+      "description": "a sturdy structure with a thatched roof",
+      "npcs": []
+    },
+    {
+      "id": "building_3",
+      "name": "Old Guard Post",
+      "type": "guard post",
+      "description": "an old building that has seen better days",
+      "npcs": []
+    },
+    {
+      "id": "building_4",
+      "name": "Fine Temple",
+      "type": "temple",
+      "description": "a well-maintained building with flower boxes",
+      "npcs": []
+    },
+    {
+      "id": "building_5",
+      "name": "The Prancing Sword",
+      "type": "inn",
+      "description": "a stone building with a wooden door",
+      "npcs": []
+    },
+    {
+      "id": "building_6",
+      "name": "Town Mill",
+      "type": "mill",
+      "description": "a modest structure with a smoking chimney",
+      "npcs": []
+    },
+    {
+      "id": "building_7",
+      "name": "Quality Temple",
+      "type": "temple",
+      "description": "a modest structure with a smoking chimney",
+      "npcs": []
+    },
+    {
+      "id": "building_8",
+      "name": "Old Temple",
+      "type": "temple",
+      "description": "a sturdy structure with a thatched roof",
+      "npcs": []
+    },
+    {
+      "id": "building_9",
+      "name": "Fine Stable",
+      "type": "stable",
+      "description": "a modest structure with a smoking chimney",
+      "npcs": []
+    },
+    {
+      "id": "building_10",
+      "name": "Quality Stable",
+      "type": "stable",
+      "description": "a well-maintained building with flower boxes",
+      "npcs": []
+    },
+    {
+      "id": "building_11",
+      "name": "The Silver Dragon",
+      "type": "tavern",
+      "description": "a modest structure with a smoking chimney",
+      "npcs": []
+    },
+    {
+      "id": "building_12",
+      "name": "Old Guard Post",
+      "type": "guard post",
+      "description": "a stone building with a wooden door",
+      "npcs": []
+    },
+    {
+      "id": "building_13",
+      "name": "New Temple",
+      "type": "temple",
+      "description": "an old building that has seen better days",
+      "npcs": []
+    },
+    {
+      "id": "building_14",
+      "name": "The Rusty Barrel",
+      "type": "inn",
+      "description": "a stone building with a wooden door",
+      "npcs": []
+    }
+  ],
+  "npcs": [
+    {
+      "id": "npc_1",
+      "name": "Cora Hunter",
+      "role": "beggar",
+      "trait": "helpful",
+      "description": "a helpful beggar new to the town",
+      "building_id": null,
+      "quests": [
+        {
+          "id": "quest_test_town_1",
+          "type": "deliver",
+          "target": "item",
+          "difficulty": "easy",
+          "description": "A easy quest to rescue a monster.",
+          "reward": 144,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "npc_2",
+      "name": "Bram Cooper",
+      "role": "guard",
+      "trait": "brave",
+      "description": "a brave guard respected by the townsfolk",
+      "building_id": null,
+      "quests": [
+        {
+          "id": "quest_test_town_2",
+          "type": "investigate",
+          "target": "location",
+          "difficulty": "medium",
+          "description": "A medium quest to investigate a information.",
+          "reward": 282,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "npc_3",
+      "name": "Greta Baker",
+      "role": "beggar",
+      "trait": "greedy",
+      "description": "a greedy beggar known for their loud laugh",
+      "building_id": null,
+      "quests": []
+    },
+    {
+      "id": "npc_4",
+      "name": "Kord Smith",
+      "role": "adventurer",
+      "trait": "friendly",
+      "description": "a friendly adventurer with a distinctive scar",
+      "building_id": null,
+      "quests": []
+    },
+    {
+      "id": "npc_5",
+      "name": "Bram Farmer",
+      "role": "adventurer",
+      "trait": "greedy",
+      "description": "a greedy adventurer with a distinctive scar",
+      "building_id": null,
+      "quests": []
+    },
+    {
+      "id": "npc_6",
+      "name": "Hilda Fisher",
+      "role": "blacksmith",
+      "trait": "suspicious",
+      "description": "a suspicious blacksmith with a distinctive scar",
+      "building_id": null,
+      "quests": []
+    },
+    {
+      "id": "npc_7",
+      "name": "Tilda Miller",
+      "role": "guard",
+      "trait": "friendly",
+      "description": "a friendly guard respected by the townsfolk",
+      "building_id": null,
+      "quests": []
+    },
+    {
+      "id": "npc_8",
+      "name": "Ivan Fletcher",
+      "role": "adventurer",
+      "trait": "foolish",
+      "description": "a foolish adventurer from a long line of adventurers",
+      "building_id": null,
+      "quests": []
+    },
+    {
+      "id": "npc_9",
+      "name": "Milo Cooper",
+      "role": "guard",
+      "trait": "wise",
+      "description": "a wise guard from a long line of guards",
+      "building_id": null,
+      "quests": []
+    },
+    {
+      "id": "npc_10",
+      "name": "Cora Smith",
+      "role": "beggar",
+      "trait": "foolish",
+      "description": "a foolish beggar respected by the townsfolk",
+      "building_id": null,
+      "quests": []
+    },
+    {
+      "id": "npc_11",
+      "name": "Rosa Fletcher",
+      "role": "blacksmith",
+      "trait": "suspicious",
+      "description": "a suspicious blacksmith new to the town",
+      "building_id": null,
+      "quests": [
+        {
+          "id": "quest_test_town_11",
+          "type": "escort",
+          "target": "item",
+          "difficulty": "easy",
+          "description": "A medium quest to escort a person.",
+          "reward": 198,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "npc_12",
+      "name": "Rosa Baker",
+      "role": "farmer",
+      "trait": "friendly",
+      "description": "a friendly farmer from a long line of farmers",
+      "building_id": null,
+      "quests": [
+        {
+          "id": "quest_test_town_12",
+          "type": "rescue",
+          "target": "location",
+          "difficulty": "easy",
+          "description": "A easy quest to deliver a person.",
+          "reward": 88,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "npc_13",
+      "name": "Greta Potter",
+      "role": "guard",
+      "trait": "foolish",
+      "description": "a foolish guard from a long line of guards",
+      "building_id": null,
+      "quests": []
+    },
+    {
+      "id": "npc_14",
+      "name": "Ivan Mason",
+      "role": "adventurer",
+      "trait": "cowardly",
+      "description": "a cowardly adventurer with a distinctive scar",
+      "building_id": null,
+      "quests": [
+        {
+          "id": "quest_test_town_14",
+          "type": "investigate",
+          "target": "location",
+          "difficulty": "easy",
+          "description": "A easy quest to escort a person.",
+          "reward": 182,
+          "completed": false
+        }
+      ]
+    }
+  ],
+  "rumors": [
+    {
+      "id": "rumor_1",
+      "text": "There are whispers of ancient ruins in the beneath the town.",
+      "truth": false,
+      "known_by": [
+        "npc_1",
+        "npc_2",
+        "npc_13",
+        "npc_3",
+        "npc_9"
+      ]
+    },
+    {
+      "id": "rumor_2",
+      "text": "There are whispers of hidden treasure in the abandoned tower.",
+      "truth": true,
+      "known_by": [
+        "npc_3",
+        "npc_1",
+        "npc_5",
+        "npc_6"
+      ]
+    },
+    {
+      "id": "rumor_3",
+      "text": "There are whispers of hidden treasure in the abandoned tower.",
+      "truth": true,
+      "known_by": [
+        "npc_11",
+        "npc_2"
+      ]
+    },
+    {
+      "id": "rumor_4",
+      "text": "There are whispers of strange disappearances in the neighboring kingdom.",
+      "truth": false,
+      "known_by": [
+        "npc_12",
+        "npc_3",
+        "npc_4",
+        "npc_13",
+        "npc_11"
+      ]
+    }
+  ],
+  "_meta": {
+    "generator": "fallback",
+    "version": "1.0",
+    "seed": 924232
+  }
+}

@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "digital_dm_core",
+			"path": "."
+		},
+		{
+			"name": "digital_dm_enhancements",
+			"path": "../../digital_dm_enhancements/digital_dm_enhancements"
+		},
+		{
+			"name": "game",
+			"path": "../../../OneDrive/Desktop/game"
+		}
+	],
+	"settings": {}
+}
