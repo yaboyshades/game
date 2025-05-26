@@ -1,0 +1,79 @@
+// Add this to the CSS section of index_fixed.html
+
+.minimap-container {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+    position: relative;
+}
+
+.minimap-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.minimap-canvas-container {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    border-radius: 0.3rem;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+}
+
+.minimap-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.minimap-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+}
+
+.legend-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 0.3rem;
+}
+
+.legend-current {
+    background-color: var(--accent-color);
+}
+
+.legend-visited {
+    background-color: var(--secondary-color);
+}
+
+.legend-unvisited {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .minimap-canvas-container {
+        height: 150px;
+    }
+}
+
+/* Landscape mode */
+@media (max-width: 896px) and (orientation: landscape) {
+    .minimap-canvas-container {
+        height: 120px;
+    }
+}

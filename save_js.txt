@@ -1,0 +1,547 @@
+// Add this JavaScript to the script section of index_fixed.html
+
+// Save functionality DOM elements
+const saveButton = document.getElementById('save-button');
+const saveModal = document.getElementById('save-modal');
+const saveDialogClose = document.getElementById('save-dialog-close');
+const saveTab = document.getElementById('save-tab');
+const loadTab = document.getElementById('load-tab');
+const saveContent = document.getElementById('save-content');
+const loadContent = document.getElementById('load-content');
+const saveNameInput = document.getElementById('save-name');
+const createSaveButton = document.getElementById('create-save-button');
+const savesList = document.getElementById('saves-list');
+const saveImportInput = document.getElementById('save-import-input');
+const saveImportButton = document.getElementById('save-import-button');
+const saveNotification = document.getElementById('save-notification');
+const autosaveIndicator = document.getElementById('autosave-indicator');
+
+// Save functionality state
+let currentSaves = [];
+let lastAutoSave = null;
+const AUTO_SAVE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+// Initialize save functionality
+function initSaveSystem() {
+    // Set up event listeners
+    saveButton.addEventListener('click', openSaveModal);
+    saveDialogClose.addEventListener('click', closeSaveModal);
+    saveTab.addEventListener('click', () => switchTab('save'));
+    loadTab.addEventListener('click', () => switchTab('load'));
+    createSaveButton.addEventListener('click', createSave);
+    saveImportButton.addEventListener('click', () => saveImportInput.click());
+    saveImportInput.addEventListener('change', importSave);
+    
+    // Close modal when clicking outside
+    saveModal.addEventListener('click', function(e) {
+        if (e.target === saveModal) {
+            closeSaveModal();
+        }
+    });
+    
+    // Set up autosave timer
+    setInterval(autoSave, AUTO_SAVE_INTERVAL);
+    
+    // Load saves from localStorage on startup
+    loadSavesFromLocalStorage();
+}
+
+// Open save modal
+function openSaveModal() {
+    saveModal.classList.add('active');
+    
+    // Default save name
+    if (characterName && characterName.textContent) {
+        saveNameInput.value = `${characterName.textContent}'s Adventure`;
+    }
+    
+    // Load saves list
+    loadSaves();
+}
+
+// Close save modal
+function closeSaveModal() {
+    saveModal.classList.remove('active');
+}
+
+// Switch between save/load tabs
+function switchTab(tab) {
+    if (tab === 'save') {
+        saveTab.classList.add('active');
+        loadTab.classList.remove('active');
+        saveContent.classList.add('active');
+        loadContent.classList.remove('active');
+    } else {
+        saveTab.classList.remove('active');
+        loadTab.classList.add('active');
+        saveContent.classList.remove('active');
+        loadContent.classList.add('active');
+        
+        // Refresh saves list when switching to load tab
+        loadSaves();
+    }
+}
+
+// Create a new save
+function createSave() {
+    const saveName = saveNameInput.value.trim() || 'Unnamed Save';
+    
+    // Send save request to server
+    if (isConnected && socket) {
+        socket.send(JSON.stringify({
+            type: 'save_game',
+            data: {
+                save_name: saveName
+            }
+        }));
+        
+        // Also save to localStorage as backup
+        saveToLocalStorage(saveName);
+        
+        // Show notification
+        showNotification('Game saved successfully!');
+        
+        // Close modal
+        closeSaveModal();
+    } else {
+        // If not connected, just save to localStorage
+        saveToLocalStorage(saveName);
+        showNotification('Game saved to browser storage (offline mode)');
+        closeSaveModal();
+    }
+}
+
+// Auto-save function
+function autoSave() {
+    // Only autosave if connected and character exists
+    if (isConnected && socket && characterName && characterName.textContent) {
+        // Show autosave indicator
+        autosaveIndicator.textContent = 'Autosaving...';
+        autosaveIndicator.classList.add('show');
+        
+        // Send autosave request
+        socket.send(JSON.stringify({
+            type: 'save_game',
+            data: {
+                save_name: `Autosave: ${characterName.textContent}`
+            }
+        }));
+        
+        // Also save to localStorage
+        saveToLocalStorage(`Autosave: ${characterName.textContent}`);
+        
+        // Update last autosave time
+        lastAutoSave = new Date();
+        
+        // Hide indicator after a delay
+        setTimeout(() => {
+            autosaveIndicator.classList.remove('show');
+        }, 2000);
+    }
+}
+
+// Load saves from server
+function loadSaves() {
+    // Clear current list
+    savesList.innerHTML = '<div class="save-item"><div class="save-item-header"><div class="save-item-name">Loading saves...</div></div></div>';
+    
+    // Request saves from server
+    if (isConnected && socket) {
+        socket.send(JSON.stringify({
+            type: 'get_saves'
+        }));
+    } else {
+        // If not connected, load from localStorage
+        const localSaves = loadSavesFromLocalStorage();
+        renderSavesList(localSaves);
+    }
+}
+
+// Render saves list
+function renderSavesList(saves) {
+    // Store current saves
+    currentSaves = saves;
+    
+    // Clear list
+    savesList.innerHTML = '';
+    
+    if (saves.length === 0) {
+        savesList.innerHTML = '<div class="save-item"><div class="save-item-header"><div class="save-item-name">No saves found</div></div></div>';
+        return;
+    }
+    
+    // Add each save to the list
+    saves.forEach(save => {
+        const saveItem = document.createElement('div');
+        saveItem.className = 'save-item';
+        
+        // Format date
+        const saveDate = new Date(save.timestamp);
+        const formattedDate = saveDate.toLocaleDateString() + ' ' + saveDate.toLocaleTimeString();
+        
+        saveItem.innerHTML = `
+            <div class="save-item-header">
+                <div class="save-item-name">${save.save_name}</div>
+                <div class="save-item-date">${formattedDate}</div>
+            </div>
+            <div class="save-item-details">
+                <div class="save-item-character">
+                    ${save.character_name || 'Unknown'}, 
+                    Level ${save.character_level || '1'} 
+                    ${save.character_class || 'Character'}
+                </div>
+            </div>
+            <div class="save-item-actions">
+                <button class="save-action-button save-action-load" data-save-id="${save.save_id}">Load</button>
+                <button class="save-action-button save-action-delete" data-save-id="${save.save_id}">Delete</button>
+                <button class="save-action-button save-action-export" data-save-id="${save.save_id}">Export</button>
+            </div>
+        `;
+        
+        savesList.appendChild(saveItem);
+    });
+    
+    // Add event listeners to buttons
+    const loadButtons = savesList.querySelectorAll('.save-action-load');
+    const deleteButtons = savesList.querySelectorAll('.save-action-delete');
+    const exportButtons = savesList.querySelectorAll('.save-action-export');
+    
+    loadButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const saveId = this.getAttribute('data-save-id');
+            loadSave(saveId);
+        });
+    });
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const saveId = this.getAttribute('data-save-id');
+            deleteSave(saveId);
+        });
+    });
+    
+    exportButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const saveId = this.getAttribute('data-save-id');
+            exportSave(saveId);
+        });
+    });
+}
+
+// Load a save
+function loadSave(saveId) {
+    if (isConnected && socket) {
+        // Send load request to server
+        socket.send(JSON.stringify({
+            type: 'load_game',
+            data: {
+                save_id: saveId
+            }
+        }));
+        
+        // Close modal
+        closeSaveModal();
+        
+        // Show loading overlay
+        showLoading('Loading saved game...');
+    } else {
+        // If not connected, try to load from localStorage
+        const localSave = getLocalSave(saveId);
+        if (localSave) {
+            // Apply local save data (limited functionality in offline mode)
+            try {
+                // Update character info from local save
+                if (localSave.player_data && localSave.player_data.character) {
+                    const character = localSave.player_data.character;
+                    
+                    // Update character sheet
+                    characterName.textContent = character.name || 'Character Name';
+                    characterRace.textContent = character.race || '-';
+                    characterClass.textContent = character.class_name || '-';
+                    characterLevel.textContent = character.level || '-';
+                    
+                    // Update health
+                    const hp = character.hp || 0;
+                    const maxHp = character.max_hp || 0;
+                    const healthPercent = maxHp > 0 ? (hp / maxHp) * 100 : 0;
+                    healthFill.style.width = `${healthPercent}%`;
+                    healthText.textContent = `${hp}/${maxHp}`;
+                    
+                    // Update stats
+                    statStr.textContent = character.strength || '-';
+                    statDex.textContent = character.dexterity || '-';
+                    statCon.textContent = character.constitution || '-';
+                    statInt.textContent = character.intelligence || '-';
+                    statWis.textContent = character.wisdom || '-';
+                    statCha.textContent = character.charisma || '-';
+                }
+                
+                // Update location
+                if (localSave.game_state && localSave.game_state.current_location_id) {
+                    // Limited location update in offline mode
+                    locationName.textContent = "Location from saved game";
+                }
+                
+                // Update mini-map if available
+                if (localSave.game_state && localSave.game_state.town_map) {
+                    updateMinimapData(localSave.game_state);
+                }
+                
+                // Close modal
+                closeSaveModal();
+                
+                // Show notification
+                showNotification('Game loaded from browser storage (offline mode)');
+                
+                // Add system message
+                addSystemMessage('Game loaded from browser storage. Some features may be limited in offline mode.');
+            } catch (error) {
+                showNotification('Error loading save: ' + error.message, true);
+            }
+        } else {
+            showNotification('Save not found in browser storage', true);
+        }
+    }
+}
+
+// Delete a save
+function deleteSave(saveId) {
+    if (confirm('Are you sure you want to delete this save?')) {
+        if (isConnected && socket) {
+            // Send delete request to server
+            socket.send(JSON.stringify({
+                type: 'delete_save',
+                data: {
+                    save_id: saveId
+                }
+            }));
+            
+            // Also delete from localStorage
+            deleteLocalSave(saveId);
+            
+            // Refresh saves list
+            loadSaves();
+        } else {
+            // If not connected, just delete from localStorage
+            deleteLocalSave(saveId);
+            
+            // Refresh saves list
+            loadSaves();
+        }
+    }
+}
+
+// Export a save
+function exportSave(saveId) {
+    // Find save in current saves
+    const save = currentSaves.find(s => s.save_id === saveId);
+    
+    if (!save) {
+        showNotification('Save not found', true);
+        return;
+    }
+    
+    // Get full save data
+    const localSave = getLocalSave(saveId);
+    
+    if (!localSave) {
+        showNotification('Save data not found in browser storage', true);
+        return;
+    }
+    
+    // Create download link
+    const dataStr = JSON.stringify(localSave, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    
+    const exportName = save.save_name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json';
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportName);
+    linkElement.click();
+}
+
+// Import a save
+function importSave(event) {
+    const file = event.target.files[0];
+    
+    if (!file) {
+        return;
+    }
+    
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        try {
+            const saveData = JSON.parse(e.target.result);
+            
+            // Validate save data
+            if (!saveData.save_id || !saveData.player_data || !saveData.game_state) {
+                throw new Error('Invalid save file format');
+            }
+            
+            // Store in localStorage
+            localStorage.setItem(`save_${saveData.save_id}`, JSON.stringify(saveData));
+            
+            // Refresh saves list
+            loadSaves();
+            
+            // Show notification
+            showNotification('Save imported successfully');
+        } catch (error) {
+            showNotification('Error importing save: ' + error.message, true);
+        }
+    };
+    
+    reader.readAsText(file);
+}
+
+// Save to localStorage
+function saveToLocalStorage(saveName) {
+    // Generate save ID if not an existing save
+    const saveId = 'local_' + Date.now();
+    const timestamp = new Date().toISOString();
+    
+    // Create save data structure
+    const saveData = {
+        save_id: saveId,
+        save_name: saveName,
+        timestamp: timestamp,
+        player_data: {
+            user_id: userId,
+            character: {
+                name: characterName ? characterName.textContent : 'Character',
+                race: characterRace ? characterRace.textContent : '',
+                class_name: characterClass ? characterClass.textContent : '',
+                level: characterLevel ? parseInt(characterLevel.textContent) || 1 : 1,
+                strength: statStr ? parseInt(statStr.textContent) || 10 : 10,
+                dexterity: statDex ? parseInt(statDex.textContent) || 10 : 10,
+                constitution: statCon ? parseInt(statCon.textContent) || 10 : 10,
+                intelligence: statInt ? parseInt(statInt.textContent) || 10 : 10,
+                wisdom: statWis ? parseInt(statWis.textContent) || 10 : 10,
+                charisma: statCha ? parseInt(statCha.textContent) || 10 : 10,
+                hp: healthText ? parseInt(healthText.textContent.split('/')[0]) || 10 : 10,
+                max_hp: healthText ? parseInt(healthText.textContent.split('/')[1]) || 10 : 10
+            }
+        },
+        game_state: {
+            current_location_id: locationName ? locationName.textContent : 'Unknown Location',
+            in_combat: combatInfo ? combatInfo.classList.contains('active') : false,
+            town_map: mapData
+        }
+    };
+    
+    // Save to localStorage
+    localStorage.setItem(`save_${saveId}`, JSON.stringify(saveData));
+    
+    // Update save index
+    let saveIndex = JSON.parse(localStorage.getItem('save_index') || '[]');
+    
+    // Add to index
+    saveIndex.push({
+        save_id: saveId,
+        save_name: saveName,
+        timestamp: timestamp,
+        character_name: characterName ? characterName.textContent : 'Character',
+        character_level: characterLevel ? parseInt(characterLevel.textContent) || 1 : 1,
+        character_class: characterClass ? characterClass.textContent : ''
+    });
+    
+    // Sort by timestamp (newest first)
+    saveIndex.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    // Save updated index
+    localStorage.setItem('save_index', JSON.stringify(saveIndex));
+    
+    return saveData;
+}
+
+// Load saves from localStorage
+function loadSavesFromLocalStorage() {
+    const saveIndex = JSON.parse(localStorage.getItem('save_index') || '[]');
+    return saveIndex;
+}
+
+// Get a specific save from localStorage
+function getLocalSave(saveId) {
+    const saveData = localStorage.getItem(`save_${saveId}`);
+    return saveData ? JSON.parse(saveData) : null;
+}
+
+// Delete a save from localStorage
+function deleteLocalSave(saveId) {
+    // Remove save data
+    localStorage.removeItem(`save_${saveId}`);
+    
+    // Update save index
+    let saveIndex = JSON.parse(localStorage.getItem('save_index') || '[]');
+    saveIndex = saveIndex.filter(save => save.save_id !== saveId);
+    localStorage.setItem('save_index', JSON.stringify(saveIndex));
+}
+
+// Show notification
+function showNotification(message, isError = false) {
+    saveNotification.textContent = message;
+    saveNotification.className = 'save-notification';
+    
+    if (isError) {
+        saveNotification.classList.add('error');
+    }
+    
+    saveNotification.classList.add('show');
+    
+    // Hide after 3 seconds
+    setTimeout(() => {
+        saveNotification.classList.remove('show');
+    }, 3000);
+}
+
+// Handle WebSocket messages for save functionality
+function handleSaveMessages(message) {
+    const type = message.type;
+    const data = message.data;
+    
+    switch (type) {
+        case 'save_result':
+            if (data.success) {
+                showNotification('Game saved successfully!');
+            } else {
+                showNotification('Error saving game: ' + (data.error || 'Unknown error'), true);
+            }
+            break;
+            
+        case 'load_result':
+            hideLoading();
+            if (data.success) {
+                showNotification('Game loaded successfully!');
+                addSystemMessage('Game loaded successfully!');
+            } else {
+                showNotification('Error loading game: ' + (data.error || 'Unknown error'), true);
+            }
+            break;
+            
+        case 'saves_list':
+            renderSavesList(data.saves || []);
+            break;
+    }
+}
+
+// Update the handleMessage function to include save functionality
+// Add this to the existing handleMessage function
+function handleMessageWithSave(message) {
+    // Existing message handling...
+    
+    // Handle save-related messages
+    if (message.type === 'save_result' || message.type === 'load_result' || message.type === 'saves_list') {
+        handleSaveMessages(message);
+    }
+}
+
+// Initialize save system when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Existing initialization...
+    initSaveSystem();
+});
+
+// Make sure to update the handleMessage function to include:
+// handleSaveMessages(message) for save-related messages

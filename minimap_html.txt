@@ -1,0 +1,22 @@
+// Add this to the HTML section of index_fixed.html, inside the sidebar div, before the location-info div
+
+<div class="minimap-container">
+    <div class="minimap-title">Town Map</div>
+    <div class="minimap-canvas-container">
+        <canvas id="minimap-canvas" class="minimap-canvas"></canvas>
+    </div>
+    <div class="minimap-legend">
+        <div class="legend-item">
+            <div class="legend-color legend-current"></div>
+            <span>Current</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color legend-visited"></div>
+            <span>Visited</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color legend-unvisited"></div>
+            <span>Unvisited</span>
+        </div>
+    </div>
+</div>

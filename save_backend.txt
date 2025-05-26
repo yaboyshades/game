@@ -1,0 +1,307 @@
+"""
+Backend implementation for save functionality in the Digital DM Game.
+This code should be integrated into the game_server_fixed.py file.
+"""
+
+# Add these imports if not already present
+import os
+import json
+import time
+import uuid
+from datetime import datetime
+from typing import Dict, Any, List, Optional, Set, Tuple
+
+# Add these to the GameServer class
+class GameServer:
+    # Existing code...
+    
+    def __init__(self):
+        # Existing initialization code...
+        
+        # Create saves directory if it doesn't exist
+        self.saves_dir = "saves"
+        os.makedirs(self.saves_dir, exist_ok=True)
+        
+        # Initialize save index
+        self.save_index = self.load_save_index()
+    
+    def load_save_index(self) -> Dict[str, List[Dict[str, Any]]]:
+        """Load the save index file or create a new one if it doesn't exist."""
+        index_path = os.path.join(self.saves_dir, "save_index.json")
+        
+        if os.path.exists(index_path):
+            try:
+                with open(index_path, "r") as f:
+                    return json.load(f)
+            except json.JSONDecodeError:
+                # If index is corrupted, create a new one
+                return {}
+        else:
+            # Create new index
+            return {}
+    
+    def save_game(self, user_id: str, save_name: Optional[str] = None) -> Dict[str, Any]:
+        """Save the current game state for a user."""
+        # Get player character
+        player_character = self.get_player_character(user_id)
+        
+        if not player_character:
+            raise ValueError("No character found for this user")
+        
+        # Create user save directory if it doesn't exist
+        user_save_dir = os.path.join(self.saves_dir, user_id)
+        os.makedirs(user_save_dir, exist_ok=True)
+        
+        # Generate save ID if not an existing save
+        save_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+        
+        # Create save data structure
+        save_data = {
+            "save_id": save_id,
+            "save_name": save_name or f"{player_character.name}'s Adventure",
+            "timestamp": timestamp,
+            "player_data": {
+                "user_id": user_id,
+                "character": player_character.to_dict()
+            },
+            "game_state": {
+                "current_location_id": player_character.current_location_id,
+                "in_combat": player_character.in_combat,
+                "combat_data": self.get_combat_state(user_id),
+                "town_map": self.game_state.town_map,
+                "quests": [],  # To be implemented
+                "game_flags": {}  # To be implemented
+            }
+        }
+        
+        # Save to file
+        filename = f"{save_id}_{int(time.time())}.json"
+        save_path = os.path.join(user_save_dir, filename)
+        
+        with open(save_path, "w") as f:
+            json.dump(save_data, f, indent=2)
+        
+        # Update save index
+        if user_id not in self.save_index:
+            self.save_index[user_id] = []
+        
+        # Add to index (or update if exists)
+        save_info = {
+            "save_id": save_id,
+            "save_name": save_data["save_name"],
+            "timestamp": timestamp,
+            "filename": filename,
+            "character_name": player_character.name,
+            "character_level": player_character.level,
+            "character_class": player_character.class_name
+        }
+        
+        # Remove existing save with same ID if exists
+        self.save_index[user_id] = [s for s in self.save_index[user_id] if s["save_id"] != save_id]
+        self.save_index[user_id].append(save_info)
+        
+        # Save updated index
+        with open(os.path.join(self.saves_dir, "save_index.json"), "w") as f:
+            json.dump(self.save_index, f, indent=2)
+        
+        return save_info
+    
+    def load_game(self, user_id: str, save_id: str) -> bool:
+        """Load a saved game for a user."""
+        # Check if save exists in index
+        if user_id not in self.save_index:
+            return False
+        
+        save_info = next((s for s in self.save_index[user_id] if s["save_id"] == save_id), None)
+        
+        if not save_info:
+            return False
+        
+        # Load save file
+        save_path = os.path.join(self.saves_dir, user_id, save_info["filename"])
+        
+        if not os.path.exists(save_path):
+            # Remove from index if file doesn't exist
+            self.save_index[user_id] = [s for s in self.save_index[user_id] if s["save_id"] != save_id]
+            with open(os.path.join(self.saves_dir, "save_index.json"), "w") as f:
+                json.dump(self.save_index, f, indent=2)
+            return False
+        
+        try:
+            with open(save_path, "r") as f:
+                save_data = json.load(f)
+            
+            # Restore player character
+            character_data = save_data["player_data"]["character"]
+            player_character = PlayerCharacter(
+                user_id=user_id,
+                name=character_data["name"],
+                race=character_data["race"],
+                class_name=character_data["class_name"]
+            )
+            
+            # Restore character attributes
+            for key, value in character_data.items():
+                if hasattr(player_character, key) and key != "user_id":
+                    setattr(player_character, key, value)
+            
+            # Update game state
+            self.game_state.characters[user_id] = player_character
+            
+            # Restore town map data
+            if "town_map" in save_data["game_state"]:
+                self.game_state.town_map = save_data["game_state"]["town_map"]
+            
+            # Restore combat if in combat
+            if save_data["game_state"]["in_combat"] and save_data["game_state"]["combat_data"]:
+                # Implement combat restoration logic here
+                pass
+            
+            return True
+            
+        except (json.JSONDecodeError, KeyError) as e:
+            # Log error and return false
+            print(f"Error loading save: {str(e)}")
+            return False
+    
+    def get_saves(self, user_id: str) -> List[Dict[str, Any]]:
+        """Get list of saves for a user."""
+        if user_id not in self.save_index:
+            return []
+        
+        # Sort by timestamp (newest first)
+        return sorted(
+            self.save_index[user_id],
+            key=lambda s: s["timestamp"],
+            reverse=True
+        )
+    
+    def delete_save(self, user_id: str, save_id: str) -> bool:
+        """Delete a save for a user."""
+        if user_id not in self.save_index:
+            return False
+        
+        save_info = next((s for s in self.save_index[user_id] if s["save_id"] == save_id), None)
+        
+        if not save_info:
+            return False
+        
+        # Remove save file
+        save_path = os.path.join(self.saves_dir, user_id, save_info["filename"])
+        
+        if os.path.exists(save_path):
+            os.remove(save_path)
+        
+        # Update index
+        self.save_index[user_id] = [s for s in self.save_index[user_id] if s["save_id"] != save_id]
+        
+        # Save updated index
+        with open(os.path.join(self.saves_dir, "save_index.json"), "w") as f:
+            json.dump(self.save_index, f, indent=2)
+        
+        return True
+
+    # Add these routes to the setup_routes method
+    def setup_routes(self):
+        # Existing routes...
+        
+        # Save game endpoint
+        @self.app.post("/api/save")
+        async def save_game(user_id: str, save_name: Optional[str] = None):
+            try:
+                save_info = self.save_game(user_id, save_name)
+                return {"success": True, "save": save_info}
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+        
+        # Load game endpoint
+        @self.app.post("/api/load")
+        async def load_game(user_id: str, save_id: str):
+            success = self.load_game(user_id, save_id)
+            return {"success": success}
+        
+        # Get saves endpoint
+        @self.app.get("/api/saves/{user_id}")
+        async def get_saves(user_id: str):
+            saves = self.get_saves(user_id)
+            return {"saves": saves}
+        
+        # Delete save endpoint
+        @self.app.delete("/api/saves/{user_id}/{save_id}")
+        async def delete_save(user_id: str, save_id: str):
+            success = self.delete_save(user_id, save_id)
+            return {"success": success}
+    
+    # Add WebSocket message handling for save/load
+    async def process_message(self, user_id: str, message: str, websocket: WebSocket = None):
+        # Existing code...
+        
+        try:
+            # Parse message as JSON
+            data = json.loads(message)
+            message_type = data.get("type", "")
+            
+            # Handle save/load messages
+            if message_type == "save_game":
+                save_name = data.get("data", {}).get("save_name", None)
+                save_info = self.save_game(user_id, save_name)
+                
+                # Send save confirmation
+                response = {
+                    "type": "save_result",
+                    "data": {
+                        "success": True,
+                        "save": save_info
+                    }
+                }
+                
+                if websocket:
+                    await self.send_message_to_socket(websocket, response)
+                else:
+                    await self.send_message(user_id, response)
+                
+            elif message_type == "load_game":
+                save_id = data.get("data", {}).get("save_id", "")
+                success = self.load_game(user_id, save_id)
+                
+                # Send load confirmation
+                response = {
+                    "type": "load_result",
+                    "data": {
+                        "success": success
+                    }
+                }
+                
+                if websocket:
+                    await self.send_message_to_socket(websocket, response)
+                else:
+                    await self.send_message(user_id, response)
+                
+                # If load was successful, send updated game state
+                if success:
+                    if websocket:
+                        await self.send_game_state_to_socket(websocket, user_id)
+                    else:
+                        await self.send_game_state(user_id)
+            
+            elif message_type == "get_saves":
+                saves = self.get_saves(user_id)
+                
+                response = {
+                    "type": "saves_list",
+                    "data": {
+                        "saves": saves
+                    }
+                }
+                
+                if websocket:
+                    await self.send_message_to_socket(websocket, response)
+                else:
+                    await self.send_message(user_id, response)
+            
+            # Continue with existing message processing...
+        
+        except Exception as e:
+            # Existing error handling...
+            pass

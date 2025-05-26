@@ -1,0 +1,167 @@
+"""
+Backend modifications for the mini-map feature in the Digital DM Game.
+This code should be integrated into the game_server_fixed.py file.
+"""
+
+# Add these imports if not already present
+import random
+from typing import Dict, Any, List, Optional, Set, Tuple
+
+# Add this to the GameState class initialization
+class GameState:
+    def __init__(self):
+        # Existing initialization code...
+        
+        # Add town map data structure
+        self.town_map = {
+            "name": "Eigengrau",
+            "locations": [],
+            "player_visited": []
+        }
+        
+        # Initialize town map
+        self.initialize_town_map()
+    
+    def initialize_town_map(self):
+        """Initialize the town map with locations and connections."""
+        # Define town locations with coordinates
+        locations = [
+            {
+                "id": "town_square",
+                "name": "Town Square",
+                "type": "town_square",
+                "x": 50,
+                "y": 50,
+                "connections": ["inn", "blacksmith", "temple", "market", "town_hall"]
+            },
+            {
+                "id": "inn",
+                "name": "The Prancing Pony Inn",
+                "type": "inn",
+                "x": 30,
+                "y": 70,
+                "connections": ["town_square", "market"]
+            },
+            {
+                "id": "blacksmith",
+                "name": "Blacksmith's Forge",
+                "type": "blacksmith",
+                "x": 70,
+                "y": 70,
+                "connections": ["town_square", "market"]
+            },
+            {
+                "id": "temple",
+                "name": "Temple of Light",
+                "type": "temple",
+                "x": 30,
+                "y": 30,
+                "connections": ["town_square"]
+            },
+            {
+                "id": "market",
+                "name": "Market District",
+                "type": "market",
+                "x": 50,
+                "y": 80,
+                "connections": ["town_square", "inn", "blacksmith"]
+            },
+            {
+                "id": "town_hall",
+                "name": "Town Hall",
+                "type": "town_hall",
+                "x": 70,
+                "y": 30,
+                "connections": ["town_square"]
+            }
+        ]
+        
+        # Add locations to town map
+        self.town_map["locations"] = locations
+        
+        # Mark town square as visited by default
+        self.town_map["player_visited"] = ["town_square"]
+
+# Add this to the GameServer class
+class GameServer:
+    # Existing code...
+    
+    def get_game_state_for_user(self, user_id: str) -> Dict[str, Any]:
+        """Get the current game state for a user."""
+        player_character = self.get_player_character(user_id)
+        current_location = None
+        
+        if player_character:
+            current_location = self.get_location(player_character.current_location_id)
+        
+        # Include town map data in game state
+        game_state = {
+            "player_character": player_character.to_dict() if player_character else None,
+            "current_location": current_location.to_dict() if current_location else None,
+            "in_combat": player_character.in_combat if player_character else False,
+            "combat": self.get_combat_state(user_id),
+            "town_map": self.game_state.town_map
+        }
+        
+        return game_state
+    
+    async def send_game_state(self, user_id: str):
+        """Send the current game state to all connections for a user."""
+        if user_id not in self.active_connections:
+            return
+        
+        game_state = self.get_game_state_for_user(user_id)
+        
+        message = {
+            "type": "game_state",
+            "data": game_state
+        }
+        
+        for websocket in self.active_connections[user_id]:
+            await self.send_message_to_socket(websocket, message)
+    
+    async def send_game_state_to_socket(self, websocket: WebSocket, user_id: str):
+        """Send the current game state to a specific socket."""
+        game_state = self.get_game_state_for_user(user_id)
+        
+        message = {
+            "type": "game_state",
+            "data": game_state
+        }
+        
+        await self.send_message_to_socket(websocket, message)
+    
+    async def process_game_input(self, user_id: str, player_input: str, websocket: WebSocket = None):
+        """Process game input from a player."""
+        # Existing code...
+        
+        # Check for movement commands to update visited locations
+        player_character = self.get_player_character(user_id)
+        if player_character:
+            # Simple movement detection - can be enhanced with NLP
+            move_commands = ["go to", "visit", "travel to", "head to", "walk to"]
+            is_move_command = any(cmd in player_input.lower() for cmd in move_commands)
+            
+            if is_move_command:
+                # Find location in input
+                target_location = None
+                for location in self.game_state.town_map["locations"]:
+                    if location["name"].lower() in player_input.lower():
+                        target_location = location
+                        break
+                
+                if target_location:
+                    # Update player's current location
+                    player_character.current_location_id = target_location["id"]
+                    
+                    # Add to visited locations if not already visited
+                    if target_location["id"] not in self.game_state.town_map["player_visited"]:
+                        self.game_state.town_map["player_visited"].append(target_location["id"])
+                    
+                    # Send updated game state
+                    if websocket:
+                        await self.send_game_state_to_socket(websocket, user_id)
+                    else:
+                        await self.send_game_state(user_id)
+        
+        # Continue with existing processing...

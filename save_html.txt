@@ -1,0 +1,51 @@
+<!-- Add this HTML to the body section of index_fixed.html, just before the closing body tag -->
+
+<button id="save-button" class="save-button">
+    <span class="save-icon">💾</span>
+    <span>Save</span>
+</button>
+
+<div id="save-modal" class="save-modal">
+    <div class="save-dialog">
+        <div class="save-dialog-header">
+            <div class="save-dialog-title">Game Saves</div>
+            <button id="save-dialog-close" class="save-dialog-close">&times;</button>
+        </div>
+        
+        <div class="save-tabs">
+            <div id="save-tab" class="save-tab active">Save Game</div>
+            <div id="load-tab" class="save-tab">Load Game</div>
+        </div>
+        
+        <div id="save-content" class="save-content active">
+            <div class="save-form">
+                <div class="save-form-group">
+                    <label for="save-name" class="save-form-label">Save Name</label>
+                    <input type="text" id="save-name" class="save-form-input" placeholder="Enter a name for your save">
+                </div>
+                
+                <button id="create-save-button" class="save-action-button save-action-load">Save Game</button>
+            </div>
+        </div>
+        
+        <div id="load-content" class="save-content">
+            <div id="saves-list" class="save-list">
+                <!-- Save items will be added here dynamically -->
+                <div class="save-item">
+                    <div class="save-item-header">
+                        <div class="save-item-name">Loading saves...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="save-import">
+                <label for="save-import-input" class="save-import-label">Import Save File</label>
+                <input type="file" id="save-import-input" class="save-import-input" accept=".json">
+                <button id="save-import-button" class="save-import-button">Choose File</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="save-notification" class="save-notification">Game saved successfully!</div>
+<div id="autosave-indicator" class="autosave-indicator">Autosaving...</div>

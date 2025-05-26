@@ -1,0 +1,287 @@
+// Add this CSS to the styles section of index_fixed.html
+
+.save-button {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 0.3rem;
+    padding: 0.5rem 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.save-button:hover {
+    background-color: var(--primary-color);
+}
+
+.save-icon {
+    font-size: 1.2rem;
+}
+
+.save-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    display: none;
+}
+
+.save-modal.active {
+    display: flex;
+}
+
+.save-dialog {
+    background-color: var(--background-color);
+    border: 2px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.save-dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.save-dialog-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.save-dialog-close {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.save-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.save-tab {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+
+.save-tab.active {
+    border-bottom: 2px solid var(--accent-color);
+    font-weight: bold;
+}
+
+.save-content {
+    display: none;
+}
+
+.save-content.active {
+    display: block;
+}
+
+.save-form {
+    margin-bottom: 1rem;
+}
+
+.save-form-group {
+    margin-bottom: 1rem;
+}
+
+.save-form-label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: bold;
+}
+
+.save-form-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.3rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+}
+
+.save-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.save-item {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 0.3rem;
+    padding: 0.8rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.save-item:hover {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.save-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.save-item-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.save-item-date {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.save-item-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.save-item-character {
+    flex: 1;
+}
+
+.save-item-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.save-action-button {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: center;
+}
+
+.save-action-load {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.save-action-load:hover {
+    background-color: var(--primary-color);
+}
+
+.save-action-delete {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.save-action-delete:hover {
+    background-color: #d32f2f;
+}
+
+.save-action-export {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.save-action-export:hover {
+    background-color: var(--border-color);
+}
+
+.save-import {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.save-import-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.save-import-input {
+    display: none;
+}
+
+.save-import-button {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.save-import-button:hover {
+    background-color: var(--border-color);
+}
+
+.save-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--success-color);
+    color: white;
+    padding: 0.8rem 1.2rem;
+    border-radius: 0.3rem;
+    font-weight: bold;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.save-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.save-notification.error {
+    background-color: var(--danger-color);
+}
+
+.autosave-indicator {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+    z-index: 90;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.autosave-indicator.show {
+    opacity: 1;
+}

@@ -1,0 +1,332 @@
+// Add this JavaScript to the script section of index_fixed.html
+
+// Mini-map related DOM elements
+const minimapCanvas = document.getElementById('minimap-canvas');
+const minimapCtx = minimapCanvas.getContext('2d');
+
+// Mini-map state
+let mapData = {
+    town: {
+        name: "",
+        locations: []
+    },
+    visitedLocations: [],
+    currentLocationId: ""
+};
+
+// Location type to icon/color mapping
+const locationIcons = {
+    "town_square": { color: "#9d4edd", icon: "⭐" },
+    "inn": { color: "#c77dff", icon: "🍺" },
+    "blacksmith": { color: "#e26d5c", icon: "⚒️" },
+    "temple": { color: "#ffcb69", icon: "🏛️" },
+    "market": { color: "#8ac926", icon: "🛒" },
+    "town_hall": { color: "#1982c4", icon: "🏛️" },
+    "default": { color: "#8ecae6", icon: "📍" }
+};
+
+// Initialize mini-map
+function initMinimap() {
+    // Set canvas size based on container
+    resizeMinimapCanvas();
+    
+    // Initial render with empty data
+    renderMinimap();
+    
+    // Add resize listener
+    window.addEventListener('resize', resizeMinimapCanvas);
+}
+
+// Resize canvas to match container
+function resizeMinimapCanvas() {
+    const container = minimapCanvas.parentElement;
+    minimapCanvas.width = container.clientWidth;
+    minimapCanvas.height = container.clientHeight;
+    
+    // Re-render after resize
+    renderMinimap();
+}
+
+// Update mini-map data
+function updateMinimapData(gameState) {
+    if (!gameState || !gameState.town_map) return;
+    
+    mapData = {
+        town: {
+            name: gameState.town_map.name || "Unknown Town",
+            locations: gameState.town_map.locations || []
+        },
+        visitedLocations: gameState.town_map.player_visited || [],
+        currentLocationId: gameState.current_location ? gameState.current_location.id : ""
+    };
+    
+    // Render with new data
+    renderMinimap();
+}
+
+// Render the mini-map
+function renderMinimap() {
+    if (!minimapCtx) return;
+    
+    // Clear canvas
+    minimapCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+    
+    // Draw background
+    minimapCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    minimapCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+    
+    // If no locations, show placeholder
+    if (!mapData.town.locations || mapData.town.locations.length === 0) {
+        drawPlaceholderMap();
+        return;
+    }
+    
+    // Calculate scaling to fit all locations
+    const padding = 20;
+    const bounds = getMapBounds();
+    const scaleX = (minimapCanvas.width - padding * 2) / (bounds.maxX - bounds.minX || 1);
+    const scaleY = (minimapCanvas.height - padding * 2) / (bounds.maxY - bounds.minY || 1);
+    const scale = Math.min(scaleX, scaleY);
+    
+    // Draw connections first (so they're behind locations)
+    drawConnections(scale, bounds, padding);
+    
+    // Draw locations
+    drawLocations(scale, bounds, padding);
+    
+    // Draw town name
+    drawTownName();
+}
+
+// Get the bounds of all locations for scaling
+function getMapBounds() {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    
+    mapData.town.locations.forEach(location => {
+        minX = Math.min(minX, location.x);
+        minY = Math.min(minY, location.y);
+        maxX = Math.max(maxX, location.x);
+        maxY = Math.max(maxY, location.y);
+    });
+    
+    // If only one location or all at same position, create artificial bounds
+    if (minX === maxX) {
+        minX -= 10;
+        maxX += 10;
+    }
+    if (minY === maxY) {
+        minY -= 10;
+        maxY += 10;
+    }
+    
+    return { minX, minY, maxX, maxY };
+}
+
+// Draw connections between locations
+function drawConnections(scale, bounds, padding) {
+    minimapCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    minimapCtx.lineWidth = 2;
+    
+    mapData.town.locations.forEach(location => {
+        if (!location.connections) return;
+        
+        const startX = padding + (location.x - bounds.minX) * scale;
+        const startY = padding + (location.y - bounds.minY) * scale;
+        
+        location.connections.forEach(connId => {
+            const connLocation = mapData.town.locations.find(l => l.id === connId);
+            if (!connLocation) return;
+            
+            const endX = padding + (connLocation.x - bounds.minX) * scale;
+            const endY = padding + (connLocation.y - bounds.minY) * scale;
+            
+            minimapCtx.beginPath();
+            minimapCtx.moveTo(startX, startY);
+            minimapCtx.lineTo(endX, endY);
+            minimapCtx.stroke();
+        });
+    });
+}
+
+// Draw all locations
+function drawLocations(scale, bounds, padding) {
+    mapData.town.locations.forEach(location => {
+        const x = padding + (location.x - bounds.minX) * scale;
+        const y = padding + (location.y - bounds.minY) * scale;
+        const isVisited = mapData.visitedLocations.includes(location.id);
+        const isCurrent = location.id === mapData.currentLocationId;
+        
+        drawLocation(x, y, location, isVisited, isCurrent);
+    });
+}
+
+// Draw a single location
+function drawLocation(x, y, location, isVisited, isCurrent) {
+    const locationType = location.type || "default";
+    const iconInfo = locationIcons[locationType] || locationIcons.default;
+    const radius = isCurrent ? 12 : 8;
+    
+    // Draw location circle
+    minimapCtx.beginPath();
+    minimapCtx.arc(x, y, radius, 0, Math.PI * 2);
+    
+    if (isCurrent) {
+        // Current location
+        minimapCtx.fillStyle = 'var(--accent-color)';
+        minimapCtx.strokeStyle = 'white';
+        minimapCtx.lineWidth = 2;
+    } else if (isVisited) {
+        // Visited location
+        minimapCtx.fillStyle = 'var(--secondary-color)';
+        minimapCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        minimapCtx.lineWidth = 1;
+    } else {
+        // Unvisited location
+        minimapCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        minimapCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        minimapCtx.lineWidth = 1;
+    }
+    
+    minimapCtx.fill();
+    minimapCtx.stroke();
+    
+    // Draw location name on hover (to be implemented with event listeners)
+    
+    // Optional: Draw icon in center
+    if (iconInfo.icon && isVisited) {
+        minimapCtx.fillStyle = 'white';
+        minimapCtx.font = `${radius}px Arial`;
+        minimapCtx.textAlign = 'center';
+        minimapCtx.textBaseline = 'middle';
+        minimapCtx.fillText(iconInfo.icon, x, y);
+    }
+}
+
+// Draw town name
+function drawTownName() {
+    minimapCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    minimapCtx.font = '10px Arial';
+    minimapCtx.textAlign = 'right';
+    minimapCtx.textBaseline = 'bottom';
+    minimapCtx.fillText(mapData.town.name, minimapCanvas.width - 5, minimapCanvas.height - 5);
+}
+
+// Draw placeholder when no map data is available
+function drawPlaceholderMap() {
+    minimapCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    minimapCtx.font = '14px Arial';
+    minimapCtx.textAlign = 'center';
+    minimapCtx.textBaseline = 'middle';
+    minimapCtx.fillText('Map will appear as you explore', minimapCanvas.width / 2, minimapCanvas.height / 2);
+}
+
+// Add event listeners for interactivity
+function addMinimapInteractivity() {
+    minimapCanvas.addEventListener('mousemove', handleMinimapHover);
+    minimapCanvas.addEventListener('click', handleMinimapClick);
+    minimapCanvas.addEventListener('touchstart', handleMinimapTouch);
+}
+
+// Handle hover over mini-map
+function handleMinimapHover(event) {
+    const rect = minimapCanvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Find if hovering over a location
+    const hoveredLocation = findLocationAtCoordinates(x, y);
+    
+    if (hoveredLocation) {
+        // Show tooltip with location name
+        minimapCanvas.title = hoveredLocation.name;
+        minimapCanvas.style.cursor = 'pointer';
+    } else {
+        minimapCanvas.title = '';
+        minimapCanvas.style.cursor = 'default';
+    }
+}
+
+// Handle click on mini-map
+function handleMinimapClick(event) {
+    const rect = minimapCanvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Find if clicked on a location
+    const clickedLocation = findLocationAtCoordinates(x, y);
+    
+    if (clickedLocation && mapData.visitedLocations.includes(clickedLocation.id)) {
+        // If it's a visited location, suggest traveling there
+        const message = `Go to ${clickedLocation.name}`;
+        messageInput.value = message;
+        messageInput.focus();
+    }
+}
+
+// Handle touch on mini-map (for mobile)
+function handleMinimapTouch(event) {
+    event.preventDefault();
+    const touch = event.touches[0];
+    const rect = minimapCanvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    
+    // Find if touched on a location
+    const touchedLocation = findLocationAtCoordinates(x, y);
+    
+    if (touchedLocation && mapData.visitedLocations.includes(touchedLocation.id)) {
+        // If it's a visited location, suggest traveling there
+        const message = `Go to ${touchedLocation.name}`;
+        messageInput.value = message;
+        messageInput.focus();
+    }
+}
+
+// Find location at coordinates
+function findLocationAtCoordinates(x, y) {
+    if (!mapData.town.locations || mapData.town.locations.length === 0) return null;
+    
+    const padding = 20;
+    const bounds = getMapBounds();
+    const scaleX = (minimapCanvas.width - padding * 2) / (bounds.maxX - bounds.minX || 1);
+    const scaleY = (minimapCanvas.height - padding * 2) / (bounds.maxY - bounds.minY || 1);
+    const scale = Math.min(scaleX, scaleY);
+    
+    for (const location of mapData.town.locations) {
+        const locX = padding + (location.x - bounds.minX) * scale;
+        const locY = padding + (location.y - bounds.minY) * scale;
+        const radius = location.id === mapData.currentLocationId ? 12 : 8;
+        
+        // Check if coordinates are within location circle
+        const distance = Math.sqrt(Math.pow(x - locX, 2) + Math.pow(y - locY, 2));
+        if (distance <= radius) {
+            return location;
+        }
+    }
+    
+    return null;
+}
+
+// Update the updateGameState function to include mini-map updates
+// Add this to the existing updateGameState function
+function updateGameStateWithMinimap(data) {
+    // Existing game state update code...
+    
+    // Update mini-map data
+    if (data.town_map) {
+        updateMinimapData(data);
+    }
+}
+
+// Initialize mini-map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initMinimap();
+    addMinimapInteractivity();
+});
+
+// Make sure to call updateMinimapData when game state is updated
+// Modify the existing updateGameState function to include:
+// updateMinimapData(data);
